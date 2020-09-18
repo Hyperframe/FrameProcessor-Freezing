@@ -3,6 +3,7 @@ using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 using TMPro;
 using System.Threading.Tasks;
+using System.Threading;
 
 #if !UNITY_EDITOR
 using Windows.Devices.Enumeration;
@@ -16,6 +17,7 @@ public class FrameProcessor : MonoBehaviour
     public PressableButtonHoloLens2 button;
 
     private bool scanningActive = false;
+    private int framesProcessed = 0;
 
 #if !UNITY_EDITOR
     private MediaCapture mediaCapture;
@@ -126,7 +128,8 @@ public class FrameProcessor : MonoBehaviour
     {
         var mediaFrameReference = sender.TryAcquireLatestFrame();
 
-        System.Diagnostics.Debug.WriteLine("Got frame.");
+        Interlocked.Increment(ref framesProcessed);
+        System.Diagnostics.Debug.WriteLine($"{framesProcessed} frames processed.");
 
         mediaFrameReference?.Dispose();
     }
