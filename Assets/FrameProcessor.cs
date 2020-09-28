@@ -1,7 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using Microsoft.MixedReality.Toolkit.UI;
-using TMPro;
 using System.Threading.Tasks;
 using System.Threading;
 
@@ -14,47 +12,20 @@ using Windows.Media.MediaProperties;
 
 public class FrameProcessor : MonoBehaviour
 {
-    public PressableButtonHoloLens2 button;
-
-    private bool scanningActive = false;
-    private int framesProcessed = 0;
-
 #if !UNITY_EDITOR
+    private int framesProcessed = 0;
     private MediaCapture mediaCapture;
     private MediaFrameReader mediaFrameReader;
-#endif
 
-    private const int DESIRED_WIDTH = 640;
-    private const int DESIRED_HEIGHT = 360;
-    private const int DESIRED_FRAMERATE = 15;
+    private const int DesiredWidth = 640;
+    private const int DesiredHeight = 360;
+    private const int DesiredFramerate = 15;
 
-    public void ButtonPressed()
+    public void Start()
     {
-        SetScanState(!scanningActive);
+        StartCapture();
     }
 
-    private void SetScanState(bool scanning)
-    {
-#if !UNITY_EDITOR
-        if (scanning)
-        {
-            StartCapture();
-        }
-        else
-        {
-            StopCapture();
-        }
-#endif
-
-        var labels = button.GetComponentsInChildren<TextMeshPro>();
-        foreach (var label in labels)
-        {
-            label.text = scanning ? "Stop Capture" : "Start Capture";
-        }
-        scanningActive = scanning;
-    }
-
-#if !UNITY_EDITOR
     public async void StartCapture()
     {
         System.Diagnostics.Debug.WriteLine("Starting capture.");
@@ -127,9 +98,18 @@ public class FrameProcessor : MonoBehaviour
     private void MediaFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
     {
         var mediaFrameReference = sender.TryAcquireLatestFrame();
+        var softwareBitmap = mediaFrameReference?.VideoMediaFrame?.SoftwareBitmap;
 
-        Interlocked.Increment(ref framesProcessed);
-        System.Diagnostics.Debug.WriteLine($"{framesProcessed} frames processed.");
+        if (softwareBitmap != null)
+        {
+            // Mock processing...
+            Thread.Sleep(50);
+
+            Interlocked.Increment(ref framesProcessed);
+            System.Diagnostics.Debug.WriteLine($"{framesProcessed} frames processed.");
+
+            softwareBitmap.Dispose();
+        }
 
         mediaFrameReference?.Dispose();
     }
@@ -163,7 +143,7 @@ public class FrameProcessor : MonoBehaviour
                     description.Subtype,
                     description.FrameRate);
 
-                if (description.Width == DESIRED_WIDTH && description.Height == DESIRED_HEIGHT && description.FrameRate == DESIRED_FRAMERATE)
+                if (description.Width == DesiredWidth && description.Height == DesiredHeight && description.FrameRate == DesiredFramerate)
                 {
                     mediaProfile = profile;
                     mediaDescription = description;
@@ -186,7 +166,7 @@ public class FrameProcessor : MonoBehaviour
         {
             foreach (var format in source.SupportedFormats)
             {
-                if (format.VideoFormat.Width == DESIRED_WIDTH && format.VideoFormat.Height == DESIRED_HEIGHT && format.FrameRate.Numerator == DESIRED_FRAMERATE)
+                if (format.VideoFormat.Width == DesiredWidth && format.VideoFormat.Height == DesiredHeight && format.FrameRate.Numerator == DesiredFramerate)
                 {
                     frameSource = source;
                     frameFormat = format;
